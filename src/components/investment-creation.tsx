@@ -87,7 +87,6 @@ export const InvestmentCreation = () => {
                             render={({ field }) => {
                                 const label = (<>
                                     <FormLabel className="text-[12px] text-xs md:text-xs font-bold text-[#6D798B] tracking-widest whitespace-nowrap">DATA DE VENCIMENTO</FormLabel>
-                                    <FormMessage className="text-sm"/>
                                 </>)
 
                                 return (
@@ -97,11 +96,12 @@ export const InvestmentCreation = () => {
                                                 className="bg-[#F2F4F5] rounded-sx border-none text-sm font-light text-[#001E40] mt-2 " 
                                                 label={label}
                                                 placeholderText="Selecione a data de vencimento"
+                                                onSelectDate={(date) => field.onChange(date)}
                                                 {...field}
                                             />
 
                                         </FormControl>
-                                        
+                                        <FormMessage className="text-sm"/>
                                     </FormItem>
                                 )
                             }}
