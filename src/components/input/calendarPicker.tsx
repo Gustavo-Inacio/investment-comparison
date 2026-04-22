@@ -14,16 +14,25 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-function formatDate(date: Date | undefined) {
-  if (!date) {
+function formatDate(dateTime: Date | undefined) {
+  if (!dateTime) {
     return ""
   }
 
-  return date.toLocaleDateString("en-US", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  })
+  const date = dateTime.toISOString().split("T")[0];
+
+  return date.replaceAll("-", "/").split("/").reverse().join("/") // Convert to DD/MM/YYYY
+}
+
+function formatDateMask(value: string): string {
+  const cleaned = value.replace(/\D/g, "")
+  if (cleaned.length <= 2) {
+    return cleaned
+  }
+  if (cleaned.length <= 4) {
+    return `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`
+  }
+  return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4, 8)}`
 }
 
 interface CalendarPickerProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -32,16 +41,19 @@ interface CalendarPickerProps extends React.HTMLAttributes<HTMLDivElement> {
   label?: React.ReactNode,
   name?: string,
   onSelectDate?: (date: Date | undefined) => void,
-  inputProps?: React.InputHTMLAttributes<HTMLInputElement>,
+  inputProps?: any,
+  validate?: (date: Date | undefined) => string | undefined,
+  error?: string,
 }
 
-export function CalendarPicker({ labelText, placeholderText, label, name, onSelectDate, className, inputProps }: CalendarPickerProps) {
+export function CalendarPicker({ labelText, placeholderText, label, name, onSelectDate, className, inputProps, validate, error }: CalendarPickerProps) {
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState("")
   const [date, setDate] = React.useState<Date | undefined>(
     parseDate(value) || undefined
   )
   const [month, setMonth] = React.useState<Date | undefined>(date)
+  const [validationError, setValidationError] = React.useState<string | undefined>(error)
   
   return (
     <div className={`flex flex-col gap-3"`} >
@@ -52,15 +64,16 @@ export function CalendarPicker({ labelText, placeholderText, label, name, onSele
         <Input
           id="date"
           value={value}
-          readOnly={true}
-          placeholder={placeholderText}
+          placeholder={placeholderText || "MM/DD/YYYY"}
           className="bg-background pr-10 bg-red"
           name={name}
-          // {...inputProps}
+          type="text"
+          inputMode="numeric"
+          maxLength={10}
           onChange={(e) => {
-            console.log('e', e)
-            setValue(e.target.value)
-            const date = parseDate(e.target.value)
+            const masked = formatDateMask(e.target.value)
+            setValue(masked)
+            const date = parseDate(masked)
             if (date) {
               setDate(date)
               setMonth(date)
@@ -72,6 +85,7 @@ export function CalendarPicker({ labelText, placeholderText, label, name, onSele
               setOpen(true)
             }
           }}
+          {...inputProps}
         />
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
@@ -91,42 +105,30 @@ export function CalendarPicker({ labelText, placeholderText, label, name, onSele
               captionLayout="dropdown"
               month={month}
               onMonthChange={setMonth}
-              onSelect={(date) => {
-                setDate(date)
-                setValue(formatDate(date))
+              fromYear={1980}
+              toYear={2200}
+              onSelect={(selectedDate) => {
+                setDate(selectedDate)
+                setValue(formatDate(selectedDate))
                 setOpen(false)
+                
+                // Run validation if provided
+                if (validate) {
+                  const validationResult = validate(selectedDate)
+                  setValidationError(validationResult)
+                }
+                
                 if (onSelectDate) {
-                  onSelectDate(date);
+                  onSelectDate(selectedDate);
                 }
               }}
             />
           </PopoverContent>
         </Popover>
       </div>
+      {validationError && <span className="text-sm text-red-500">{validationError}</span>}
     </div>
   )
 }
-// import { format } from "date-fns"
 
-// export function DatePickerDemo() {
-//   const [date, setDate] = React.useState<Date>()
-
-//   return (
-//     <Popover>
-//       <PopoverTrigger asChild>
-//         <Button
-//           variant="outline"
-//           data-empty={!date}
-//           className="w-[280px] justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
-//         >
-//           <CalendarIcon />
-//           {date ? format(date, "PPP") : <span>Pick a date</span>}
-//         </Button>
-//       </PopoverTrigger>
-//       <PopoverContent className="w-auto p-0">
-//         <Calendar mode="single" selected={date} onSelect={setDate} />
-//       </PopoverContent>
-//     </Popover>
-//   )
-// }
 

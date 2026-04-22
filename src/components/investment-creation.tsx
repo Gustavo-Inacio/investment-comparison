@@ -11,27 +11,29 @@ import { ContributionFrequencyEnum, IndexRateEnum, InvestmentTypeEnum } from "@/
 import { Button } from "./ui/button";
 import { formatBRLFromCents, parseBRLToCents } from "./input/currency.helper";
 import { AdPlaceholder } from "./ad-placeholder";
-
-
+import { useLocalStorage } from "@/hooks/use-localstorage";
 
 export const formSchema = z.object({
-    name: z.string().min(1, "Name is required"),
-    dueDate: z.date().min(new Date(), "Due date must be in the future"),
+    name: z.string().min(1, "Nome é obrigatório"),
+    dueDate: z.date().min(new Date(Date.now() + 24 * 60 * 60 * 1000), "Data de vencimento deve ser pelo menos um dia no futuro"),
     type: z.string().min(1, "Selecione o tipo do investimento"),
 
-    indexValue: z.number().min(0, "Index value must be non-negative"),
-    indexType: z.string().min(1, "Index type is required"),
-    indexAddedValue: z.number().min(0, "Added value must be non-negative"),
+    indexValue: z.number().min(0, "Taxa de juros deve ser um valor positivo"),
+    indexType: z.string().min(1, "Selecione o tipo de indexador"),
+    indexAddedValue: z.number().min(0, "Valor da sobretaxa deve ser positivo"),
 
-    initialContributionAmount: z.number().min(0, "Contribution amount must be non-negative"),
-    frequentContributionAmount: z.number().min(0, "Contribution amount must be non-negative"),
-    contributionFrequencyType: z.string().min(1, "Contribution frequency is required"),
-    liquidityDate: z.date(),
+    initialContributionAmount: z.number().min(1, "O valor do aporte inicial deve ser pelo menos R$ 0,01"),
+    frequentContributionAmount: z.number().min(0, "O valor do aporte frequente deve ser um valor positivo"),
+    contributionFrequencyType: z.string().min(1, "Selecione a frequência do aporte"),
+    liquidityDate: z.date().min(new Date(Date.now() + 24 * 60 * 60 * 1000), "Data de liquidação deve ser pelo menos um dia no futuro"),
 
 });
 
 
 export const InvestmentCreation = () => {
+    const [storedInvestments, setStoredInvestments] = useLocalStorage("investments", [] as z.infer<typeof formSchema>[]);
+
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -39,7 +41,7 @@ export const InvestmentCreation = () => {
             dueDate: new Date(),
             type: "",
 
-            indexValue: 0,
+            indexValue: 100,
             indexType: "",
             indexAddedValue: 0,
 
@@ -48,11 +50,14 @@ export const InvestmentCreation = () => {
             contributionFrequencyType: "",
             liquidityDate: new Date(),
         },
+        mode: "all",
     });
 
     const onSubmit = (values: z.infer<typeof formSchema>) => {
         console.log(values);
-        // Handle form submission, e.g., save to local storage or API
+        
+        setStoredInvestments((prevInvestments) => [...prevInvestments, values]);
+        form.reset();
     }
 
     return (
@@ -70,27 +75,36 @@ export const InvestmentCreation = () => {
                                 <FormControl>
                                     <Input placeholder="Ex.: CDB BMG 120% CDI " {...field} className="bg-[#F2F4F5] rounded-sx border-none pt-5 pb-5 px-4 md:text-[16px]"/>
                                 </FormControl>
+                                <FormMessage />
                             </FormItem>
                         )}
                     />
 
-                    <div className="flex gap-4 w-full flex-wrap">
+                    <div className="flex gap-4 w-full flex-wrap items-baseline">
                         <FormField
                             control={form.control}
                             name="dueDate" 
-                            render={({ field }) => (
-                                <FormItem className="w-full">
-                                    <FormControl>
-                                        <CalendarPicker 
-                                            className="bg-[#F2F4F5] rounded-sx border-none text-sm font-light text-[#001E40] mt-2 " 
-                                            label={<FormLabel className="text-[12px] text-xs md:text-xs font-bold text-[#6D798B] tracking-widest whitespace-nowrap">DATA DE VENCIMENTO</FormLabel>}
-                                            placeholderText="Selecione a data de vencimento"
-                                            {...field}
-                                        />
-                                    
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            render={({ field }) => {
+                                const label = (<>
+                                    <FormLabel className="text-[12px] text-xs md:text-xs font-bold text-[#6D798B] tracking-widest whitespace-nowrap">DATA DE VENCIMENTO</FormLabel>
+                                    <FormMessage className="text-sm"/>
+                                </>)
+
+                                return (
+                                    <FormItem className="w-full">
+                                        <FormControl>
+                                            <CalendarPicker 
+                                                className="bg-[#F2F4F5] rounded-sx border-none text-sm font-light text-[#001E40] mt-2 " 
+                                                label={label}
+                                                placeholderText="Selecione a data de vencimento"
+                                                {...field}
+                                            />
+
+                                        </FormControl>
+                                        
+                                    </FormItem>
+                                )
+                            }}
                         />
 
                         <FormField 
@@ -115,6 +129,7 @@ export const InvestmentCreation = () => {
                                             </SelectContent>
                                         </Select>
                                     </FormControl>
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />
@@ -122,12 +137,19 @@ export const InvestmentCreation = () => {
 
                     </div>
 
-                    <div className="flex gap-4.5 w-full flex-wrap lg:flex-nowrap">
+                    <div className="flex gap-4.5 w-full flex-wrap lg:flex-nowrap items-baseline">
                         <FormField 
                             control={form.control}
                             name="indexValue"
                             render={({field}) => {
-                                const { onChange, ...restField} = field;
+                                const { onChange, value, ...restField} = field;
+
+                                const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                                    const percentValue = parseFloat(e.target.value);
+                                    onChange(percentValue);
+                                }
+
+                                const displayValue = Number(value).toString() == "NaN" ? 0 : value.toString();
                                 
                                 return (
                                     <FormItem className="w-full lg:w-1/4">
@@ -135,9 +157,10 @@ export const InvestmentCreation = () => {
                                         <FormControl>
                                             <div className="bg-[#F2F4F5] rounded-sx border-none flex items-center gap-1 text-sm font-light text-[#6B7280] w-full px-4 pr-0">
                                                 <span>%</span>
-                                                <Input onChange={(e) => field.onChange(Number(e.target.value))} type="number" placeholder="Ex.: 100" {...restField} className="text-[20px] font-bold text-[#6B7280] outline-0"/>
+                                                <Input onChange={(e) => handleChange(e)} value={displayValue} type="number" inputMode="numeric" placeholder="Ex.: 100" {...restField} className="text-[20px] font-bold text-[#6B7280] outline-0"/>
                                             </div>
                                         </FormControl>
+                                        <FormMessage className="text-sm"/>
                                     </FormItem>
                                 )
                             }}
@@ -146,16 +169,25 @@ export const InvestmentCreation = () => {
                             control={form.control}
                             name="indexAddedValue"
                             render={({field}) => {
-                                const { onChange, ...restField} = field;
+                                const { onChange, value, ...restField} = field;
+
+                                const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                                    const percentValue = parseFloat(e.target.value);
+                                    onChange(percentValue);
+                                }
+
+                                const displayValue = Number(value).toString() == "NaN" ? 0 : value.toString();
+
                                 return (
                                     <FormItem className="w-full lg:w-1/4">
                                         <FormLabel className="text-xs md:text-xs font-bold text-[#6D798B] tracking-widest whitespace-nowrap">VALOR DA SOBRETAXA</FormLabel>
                                         <FormControl>
                                             <div className="bg-[#F2F4F5] rounded-sx border-none flex items-center gap-1 text-sm font-light text-[#6B7280] w-full px-4 pr-0">
                                                 <span>%</span>
-                                                <Input onChange={(e) => field.onChange(Number(e.target.value))} type="number" placeholder="Ex.: 100" {...restField} className="text-[20px] font-bold text-[#6B7280] outline-0"/>
+                                                <Input onChange={(e) => handleChange(e)} value={displayValue} type="number" inputMode="numeric" placeholder="Ex.: 100" {...restField} className="text-[20px] font-bold text-[#6B7280] outline-0"/>
                                             </div>
                                         </FormControl>
+                                        <FormMessage className="text-sm"/>
                                     </FormItem>
                                 )
                             }}
@@ -183,12 +215,13 @@ export const InvestmentCreation = () => {
                                             </SelectContent>
                                         </Select>
                                     </FormControl>
+                                    <FormMessage className="text-sm"/>
                                 </FormItem>
                             )}
                         />
                     </div>
 
-                    <div className="flex gap-4.5">
+                    <div className="flex gap-4.5 items-baseline">
                         <FormField 
                             control={form.control}
                             name="initialContributionAmount"
@@ -211,6 +244,7 @@ export const InvestmentCreation = () => {
                                                 <Input value={displayValue} onChange={handleChange} type="text"  placeholder="1000,00" {...restField} className="text-[20px] font-bold text-[#6B7280] outline-0"/>
                                             </div>
                                         </FormControl>
+                                        <FormMessage className="text-sm"/>
                                     </FormItem>
                                 )
                             }}
@@ -219,23 +253,27 @@ export const InvestmentCreation = () => {
                         <FormField
                             control={form.control}
                             name="liquidityDate" 
-                            render={({ field }) => (
+                            render={({ field, fieldState: { error} }) => (
                                 <FormItem className="w-2/4">
                                     <FormControl>
                                         <CalendarPicker 
                                             className="bg-[#F2F4F5] rounded-sx border-none text-sm font-light text-[#001E40] mt-2 " 
-                                            label={<FormLabel className="text-[12px] text-xs md:text-xs font-bold text-[#6D798B] tracking-widest">DATA DA LIQUIDEZ</FormLabel>}
+                                            label={<FormLabel className="text-[12px] text-xs md:text-xs font-bold text-[#6D798B] tracking-widest">DATA INÍCIO DA LIQUIDEZ</FormLabel>}
                                             placeholderText="Selecione a data de vencimento"
+                                            onSelectDate={(date) => field.onChange(date)}
+                                            error={error?.message}
+
                                             {...field}
                                         />
                                     
                                     </FormControl>
+                                    {error && <FormMessage className="text-destructive">{error.message}</FormMessage>}
                                 </FormItem>
                             )}
                         />  
                     </div>
 
-                    <div className="flex gap-4.5">
+                    <div className="flex gap-4.5 items-baseline">
                         <FormField 
                             control={form.control}
                             name="frequentContributionAmount"
@@ -258,6 +296,7 @@ export const InvestmentCreation = () => {
                                                 <Input value={displayValue} onChange={handleChange} type="text"  placeholder="1000,00" {...restField} className="text-[20px] font-bold text-[#6B7280] outline-0"/>
                                             </div>
                                         </FormControl>
+                                        <FormMessage className="text-sm"/>
                                     </FormItem>
                                 )
                             }}
@@ -285,6 +324,7 @@ export const InvestmentCreation = () => {
                                             </SelectContent>
                                         </Select>
                                     </FormControl>
+                                    <FormMessage className="text-sm"/>
                                 </FormItem>
                             )}
                         />  
