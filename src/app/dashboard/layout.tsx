@@ -11,7 +11,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <AppTopBar />
         {children}
       </main>
-      {/* <MobileNav /> */}
+      <MobileNav />
     </SidebarProvider>
   )
 }

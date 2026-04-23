@@ -1,38 +1,28 @@
 "use client";
 
+import { InvestmentListing } from "@/components/investment-listing/investment-listing";
 import { InvestmentListingBlock } from "@/components/investment-listing/investment-listing-block";
 import { InvestmentListingRow } from "@/components/investment-listing/investment-listing-row";
+import { PageHeader } from "@/components/page-header/page-header";
 import { useLocalStorage } from "@/hooks/use-localstorage";
 import { Investment } from "@/model/investment/investiment.model";
 import { use } from "react";
 
 export default function ListFixedIncomeInvestmentPage() {
-  const listingColumns = ["Nome", "Vencimento", "Taxa", "Aporte Inicial", "% IR", "R$ IR", "Rend. Brut. Final", "Rend. Líq. Final"];
-
   const [localDataStorage, setLocalDataStorage] = useLocalStorage<Investment[]>("Investment", [] as Investment[]);
-
-  console.log('q',localDataStorage)
   
   return (
-    <div>
-      <header className="px-7 py-2 pt-5">
-        <h1 className="text-4xl font-bold">Meus Investimentos</h1>
-      </header>
-      <div className="space-y-4 bg-stone-50 p-6 rounded-lg shadow-md">
-        <InvestmentListingRow data={listingColumns} />
-
-        {localDataStorage.map(investment => {
-          return ( 
-            <InvestmentListingBlock key={investment.id} blockTitle="CDB">
-              <InvestmentListingRow data={[investment.name, investment.dueDate.toString(), `${investment.rate.indexRate} do (a) ${investment.rate.type}`, "R$ 1.000", "15%", "R$ 150", "R$ 1.080", "R$ 930"]} />
-            </InvestmentListingBlock>
-            )
-            
-          
-        })}
-       
-
-      </div>
-    </div>
+    
+        <div className="p-5 md:p-10">
+          <PageHeader
+            title="Meus Investimentos"
+            text="Gerencie os investimentos de renda fixa que você criou, visualize detalhes, edite ou exclua conforme necessário para manter sua carteira atualizada."
+          />
+    
+          <div className="w-full lg:w-2/3">
+            <InvestmentListing />
+          </div>
+    
+        </div>
   );
 }

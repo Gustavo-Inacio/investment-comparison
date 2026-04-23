@@ -241,7 +241,7 @@ export const InvestmentCreation = () => {
                                         <FormControl>
                                             <div className="bg-[#F2F4F5] rounded-sx border-none flex items-center gap-1 text-sm font-light text-[#6B7280] w-full px-4 pr-0">
                                                 <span>R$</span>
-                                                <Input value={displayValue} onChange={handleChange} type="text"  placeholder="1000,00" {...restField} className="text-[20px] font-bold text-[#6B7280] outline-0"/>
+                                                <Input value={displayValue} onChange={handleChange} type="text"  placeholder="00,00" {...restField} className="text-[20px] font-bold text-[#6B7280] outline-0"/>
                                             </div>
                                         </FormControl>
                                         <FormMessage className="text-sm"/>
@@ -293,7 +293,7 @@ export const InvestmentCreation = () => {
                                         <FormControl>
                                             <div className="bg-[#F2F4F5] rounded-sx border-none flex items-center gap-1 text-sm font-light text-[#6B7280] w-full px-4 pr-0">
                                                 <span>R$</span>
-                                                <Input value={displayValue} onChange={handleChange} type="text"  placeholder="1000,00" {...restField} className="text-[20px] font-bold text-[#6B7280] outline-0"/>
+                                                <Input value={displayValue} onChange={handleChange} type="text"  placeholder="00,00" {...restField} className="text-[20px] font-bold text-[#6B7280] outline-0"/>
                                             </div>
                                         </FormControl>
                                         <FormMessage className="text-sm"/>
