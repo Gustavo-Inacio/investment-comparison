@@ -7,11 +7,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "./ui/input";
 import { CalendarPicker } from "./input/calendarPicker";
 import { SelectTrigger, SelectValue, Select, SelectContent, SelectGroup, SelectItem } from "./ui/select";
-import { ContributionFrequencyEnum, IndexRateEnum, InvestmentTypeEnum } from "@/model/investment/investiment.model";
+import { ContributionFrequencyEnum, IndexRateEnum, Investment, InvestmentTypeEnum } from "@/model/investment/investiment.model";
 import { Button } from "./ui/button";
 import { formatBRLFromCents, parseBRLToCents } from "./input/currency.helper";
 import { AdPlaceholder } from "./ad-placeholder";
-import { useLocalStorage } from "@/hooks/use-localstorage";
+import { LOCAL_STORAGE_KEY, useLocalStorage } from "@/hooks/use-localstorage";
 
 export const formSchema = z.object({
     name: z.string().min(1, "Nome é obrigatório"),
@@ -31,7 +31,7 @@ export const formSchema = z.object({
 
 
 export const InvestmentCreation = () => {
-    const [storedInvestments, setStoredInvestments] = useLocalStorage("investments", [] as z.infer<typeof formSchema>[]);
+    const [storedInvestments, setStoredInvestments] = useLocalStorage(LOCAL_STORAGE_KEY, [] as Investment[]);
 
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -55,8 +55,26 @@ export const InvestmentCreation = () => {
 
     const onSubmit = (values: z.infer<typeof formSchema>) => {
         console.log(values);
+
+        const investmentToAdd: Investment = {
+            id: `${storedInvestments.length + 1}`,
+            name: values.name,
+            dueDate: values.dueDate,
+            type: values.type as InvestmentTypeEnum,
+            liquidity: values.liquidityDate,
+            rate: {
+                type: values.indexType as IndexRateEnum,
+                indexRate: values.indexValue,
+                yearAddedRate: values.indexAddedValue,
+            },
+            contribution: {
+                amount: values.frequentContributionAmount,
+                frequency: values.contributionFrequencyType as ContributionFrequencyEnum,
+            },
+            initialContribution: values.initialContributionAmount,
+        }
         
-        setStoredInvestments((prevInvestments) => [...prevInvestments, values]);
+        setStoredInvestments((prevInvestments) => [...prevInvestments, investmentToAdd]);
         form.reset();
     }
 

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 
+export const LOCAL_STORAGE_KEY = "INVESTMENTS";
+
 export const useLocalStorage = <T>(key: string, initialValue: T) => {
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === "undefined") {

@@ -20,7 +20,7 @@ export default function ListFixedIncomeInvestmentPage() {
             text="Gerencie os investimentos de renda fixa que você criou, visualize detalhes, edite ou exclua conforme necessário para manter sua carteira atualizada."
           />
     
-          <div className="w-full lg:w-2/3">
+          <div className="w-full">
             <InvestmentListing />
                 {/* <AdPlaceholder width="100%" height="200px" /> */}
           </div>

@@ -41,6 +41,6 @@ export interface Investment {
     amount: number;
     frequency: ContributionFrequencyEnum;
   };
-  liquidity: LiquidityEnum;
-  }
+  liquidity: Date;
+}
 
